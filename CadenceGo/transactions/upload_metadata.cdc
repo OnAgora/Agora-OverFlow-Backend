@@ -1,0 +1,43 @@
+import YoungApeDiaries from "../contracts/YoungApeDiaries.cdc"
+
+// Put a batch of up to 500 NFT Metadatas inside the contract
+transaction(
+  names: [String],
+  descriptions: [String],
+  images: [String],
+  thumbnails: [String?],
+  prices: [UFix64?],
+  extras: [{String: String}],
+  supplies: [UInt64],
+  ipfsCID: String
+) {
+  let Administrator: &YoungApeDiaries.Administrator
+  prepare(deployer: AuthAccount) {
+    self.Administrator = deployer.borrow<&YoungApeDiaries.Administrator>(from: YoungApeDiaries.AdministratorStoragePath)
+                          ?? panic("This account is not the Administrator.")
+  }
+
+  pre {
+    names.length <= 500:
+      "There must be less than or equal to 500 NFTMetadata being added at a time."
+    names.length == descriptions.length && descriptions.length == thumbnails.length && thumbnails.length == extras.length:
+      "You must pass in a same amount of each parameter."
+  }
+
+  execute {
+    var i = 0
+    while i < names.length {
+      self.Administrator.createNFTMetadata(
+        name: names[i],
+        description: descriptions[i],
+        imagePath: images[i],
+        thumbnailPath: thumbnails[i],
+        ipfsCID: ipfsCID,
+        price: prices[i],
+        extra: extras[i],
+        supply: supplies[i]
+      )
+      i = i + 1
+    }
+  }
+}

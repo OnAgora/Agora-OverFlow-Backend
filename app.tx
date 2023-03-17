@@ -1,0 +1,34 @@
+require("dotenv").config();
+
+const
+  express = require("express"),
+  session = require("express-session"),
+  cookieParser = require("cookie-parser"),
+  cors = require("cors"),
+  path = require("path");
+
+const appRoutes = require('./src/routes');
+const app = express();
+const port = process.env.PORT || 5005;
+
+var corsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3000/*",
+    "http://192.168.0.115:3000",
+    "http://192.168.0.115:3000/*",
+    "http://localhost:5005",
+    "http://localhost:5005/*"
+  ],
+  credentials: false,
+};
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
+app.use(cors()/* (corsOptions) */);
+app.use(appRoutes);
+
+
+app.listen(port, console.log(`Backend is running on port localhost:${port}`));

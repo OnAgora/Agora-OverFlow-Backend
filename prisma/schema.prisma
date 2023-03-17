@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String        @id @default(uuid())
+  name               String        @db.VarChar(255)
+  email              String        @unique
+  photo              String?       @default("default.png")
+  verified           Boolean?      @default(false)
+  bio                String?
+  avatarUrl          String?
+  bannerUrl          String?
+  twitter            String?
+  instagram          String?
+  facebook           String?
+  discord            String?
+  password           String
+  role               RoleEnumType? @default(user)
+  verificationCode   String?       @unique
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  provider           String?
+  passwordResetToken String?
+  passwordResetAt    DateTime?
+
+  @@unique([email, verificationCode])
+  @@index([email, verificationCode])
+  @@map("users")
+}
+
+model CreatorType {
+  name     String    @id @unique
+  Creators Creator[]
+}
+
+model CreatorComingSoon {
+  collectionName    String    @id @unique
+  creatorHandleName String
+  description       String
+  launchDate        DateTime?
+  Creator           Creator   @relation(fields: [creatorHandleName], references: [handleName])
+}
+
+model Creator {
+  name              String              @id @unique
+  handleName        String              @unique
+  creatorType       String
+  description       String
+  avatarUrl         String
+  bannerUrl         String?
+  body              String?
+  twitter           String?
+  instagram         String?
+  facebook          String?
+  discord           String?
+  slug              String              @unique
+  published         Boolean             @default(true)
+  Collections       Collection[]
+  type              CreatorType         @relation(fields: [creatorType], references: [name])
+  CreatorComingSoon CreatorComingSoon[]
+  NFTs              NFT[]
+}
+
+model Collection {
+  name              String            @id @unique
+  creatorHandleName String
+  address           String            @default("0x285ca2dc98ed5119")
+  launchDate        DateTime          @default(now())
+  published         Boolean           @default(true)
+  categoryName      String
+  description       String
+  avatarUrl         String            @unique
+  bannerUrl         String
+  videoUrl          String?
+  twitter           String?
+  instagram         String?
+  facebook          String?
+  discord           String?
+  isMinting         Boolean
+  slug              String            @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime?
+  ListedName        String?
+  category          Category          @relation(fields: [categoryName], references: [name])
+  creator           Creator           @relation(fields: [creatorHandleName], references: [handleName])
+  NFTs              NFT[]
+  CollectionList    CollectionsList[] @relation("CollectionToCollectionsList")
+}
+
+model Category {
+  name        String       @unique
+  imageUrl    String?
+  color       String?
+  Collections Collection[]
+}
+
+model CollectionsList {
+  name        String       @id @unique
+  launchDate  DateTime?    @default(now())
+  collections Collection[] @relation("CollectionToCollectionsList")
+}
+
+model NFT {
+  id                String     @id @default(uuid())
+  name              String
+  description       String
+  metadataId        Int
+  serial            Int
+  collectionName    String
+  address           String     @default("0x5593df7d286bcdb8")
+  creatorHandleName String
+  image             String
+  isListed          Boolean
+  isMinted          Boolean    @default(false)
+  price             String
+  slug              String
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime?
+  nFTsListName      String?
+  collection        Collection @relation(fields: [collectionName], references: [name])
+  creator           Creator    @relation(fields: [creatorHandleName], references: [handleName])
+  List              NFTsList[] @relation("NFTToNFTsList")
+
+  @@unique([id, name, serial, collectionName])
+}
+
+model NFTsList {
+  name String @id @unique
+  nfts NFT[]  @relation("NFTToNFTsList")
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String
+  body      String
+  imageUrl  String
+  slug      String    @unique
+  featured  Boolean   @default(true)
+  published Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+  tags      Tag[]     @relation("PostToTag")
+}
+
+model Tag {
+  name  String @id @unique
+  color String
+  Posts Post[] @relation("PostToTag")
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  items         String
+  amount        Int?
+  currency      String
+  status        PaymentStatus
+  setupIntentId String?       @unique
+  chargeId      String?       @unique
+}
+
+enum RoleEnumType {
+  user
+  admin
+  editor
+}
+
+enum PaymentStatus {
+  Succeeded
+  RequiresPaymentMethod
+  RequiresConfirmation
+  Canceled
+  Processing
+  RequiresAction
+  RequiresCapture
+  Unknown
+}
